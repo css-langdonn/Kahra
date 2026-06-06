@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kahra</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --glass-bg: rgba(255,255,255,0.11);
+    --glass-border: rgba(255,255,255,0.22);
+    --glass-blur: blur(28px);
+    --accent1: #a78bfa;
+    --accent2: #38bdf8;
+    --accent3: #f472b6;
+    --text-primary: rgba(255,255,255,0.95);
+    --text-secondary: rgba(255,255,255,0.55);
+    --orb1: #6d28d9;
+    --orb2: #0ea5e9;
+    --orb3: #ec4899;
+    --orb4: #10b981;
+    --transition: cubic-bezier(0.34,1.56,0.64,1);
+    --ease: cubic-bezier(0.4,0,0.2,1);
+  }
+  [data-theme="light"] {
+    --glass-bg: rgba(255,255,255,0.52);
+    --glass-border: rgba(255,255,255,0.75);
+    --text-primary: rgba(12,12,28,0.92);
+    --text-secondary: rgba(12,12,28,0.48);
+    --orb1: #c4b5fd;
+    --orb2: #7dd3fc;
+    --orb3: #fbcfe8;
+    --orb4: #6ee7b7;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Sora', sans-serif;
+    background: #090912;
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: color 0.45s var(--ease);
+  }
+  [data-theme="light"] body, body[data-theme="light"] { background: #eceeff; }
+
+  /* Aurora */
+  .aurora { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .orb {
+    position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.5;
+    animation: drift 20s ease-in-out infinite alternate;
+    transition: background 0.8s;
+  }
+  [data-theme="light"] .orb { opacity: 0.28; }
+  .o1{width:500px;height:500px;top:-140px;left:-80px;background:var(--orb1);animation-duration:22s}
+  .o2{width:420px;height:420px;top:25%;right:-120px;background:var(--orb2);animation-duration:17s;animation-delay:-7s}
+  .o3{width:340px;height:340px;bottom:-60px;left:18%;background:var(--orb3);animation-duration:19s;animation-delay:-11s}
+  .o4{width:280px;height:280px;top:50%;left:52%;background:var(--orb4);animation-duration:24s;animation-delay:-4s}
+  @keyframes drift{0%{transform:translate(0,0) scale(1)}33%{transform:translate(35px,-28px) scale(1.07)}66%{transform:translate(-18px,45px) scale(0.94)}100%{transform:translate(28px,18px) scale(1.04)}}
+
+  /* Particles */
+  .particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+  .particle {
+    position: absolute; border-radius: 50%; background: rgba(255,255,255,0.55);
+    animation: floatUp linear infinite;
+  }
+  @keyframes floatUp{0%{transform:translateY(100vh);opacity:0}10%{opacity:.8}90%{opacity:.3}100%{transform:translateY(-8vh) translateX(20px);opacity:0}}
+
+  /* Page */
+  .page { position: relative; z-index: 2; max-width: 900px; margin: 0 auto; padding: 0 28px 60px; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* Nav */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 0 0;
+    animation: slideDown 0.65s var(--ease) both;
+  }
+  @keyframes slideDown{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:none}}
+  .logo {
+    font-size: 27px; font-weight: 700; letter-spacing: -0.6px;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2), var(--accent3));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    cursor: default; user-select: none;
+  }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+
+  /* Icon buttons */
+  .icon-btn {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.3s var(--transition); color: var(--text-primary);
+    position: relative;
+  }
+  .icon-btn:hover { transform: scale(1.1); background: rgba(255,255,255,0.2); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  #cogBtn.spinning svg { animation: spin 0.5s var(--ease); }
+  @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(180deg)} }
+
+  /* Settings Panel */
+  .settings-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: flex-start; justify-content: flex-end;
+    padding: 76px 24px 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s var(--ease);
+  }
+  .settings-overlay.open { pointer-events: all; opacity: 1; }
+  .settings-backdrop {
+    position: fixed; inset: 0; z-index: -1;
+    background: rgba(0,0,0,0.25);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    opacity: 0; transition: opacity 0.3s var(--ease);
+  }
+  .settings-overlay.open .settings-backdrop { opacity: 1; }
+
+  .settings-panel {
+    width: 340px; max-height: calc(100vh - 100px);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+    border-radius: 24px; overflow-y: auto; overflow-x: hidden;
+    padding: 22px;
+    transform: translateY(-12px) scale(0.97);
+    transition: transform 0.4s var(--transition), opacity 0.3s var(--ease);
+    opacity: 0;
+    position: relative;
+  }
+  .settings-panel::before {
+    content: ''; position: absolute; inset: 0; border-radius: 24px; pointer-events: none;
+    background: linear-gradient(135deg, rgba(255,255,255,0.09) 0%, transparent 55%);
+  }
+  .settings-overlay.open .settings-panel {
+    transform: none; opacity: 1;
+  }
+  .settings-panel::-webkit-scrollbar { width: 4px; }
+  .settings-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 100px; }
+
+  .panel-title {
+    font-size: 16px; font-weight: 700; letter-spacing: -0.3px;
+    margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .close-btn {
+    width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,0.1);
+    border: none; color: var(--text-secondary); cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; font-family: inherit;
+  }
+  .close-btn:hover { background: rgba(255,255,255,0.2); color: var(--text-primary); }
+
+  /* Setting groups */
+  .s-group { margin-bottom: 20px; }
+  .s-group-title {
+    font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-secondary); margin-bottom: 10px; font-family: 'Space Grotesk', sans-serif;
+  }
+  .s-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .s-row:last-child { border-bottom: none; }
+  .s-label { font-size: 13px; color: var(--text-primary); font-family: 'Space Grotesk', sans-serif; }
+  .s-sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; font-family: 'Space Grotesk', sans-serif; }
+
+  /* Toggle */
+  .toggle { position: relative; width: 40px; height: 24px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .t-track {
+    position: absolute; inset: 0; background: rgba(255,255,255,0.14); border-radius: 100px;
+    cursor: pointer; transition: all 0.28s var(--ease); border: 1px solid rgba(255,255,255,0.18);
+  }
+  .t-track::after {
+    content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+    border-radius: 50%; background: rgba(255,255,255,0.7); transition: all 0.28s var(--transition);
+  }
+  .toggle input:checked + .t-track { background: linear-gradient(135deg, var(--accent1), var(--accent2)); border-color: transparent; }
+  .toggle input:checked + .t-track::after { transform: translateX(16px); background: #fff; }
+
+  /* Select */
+  .s-select {
+    background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.18);
+    color: var(--text-primary); font-family: 'Space Grotesk', sans-serif; font-size: 12px;
+    border-radius: 8px; padding: 5px 26px 5px 9px; cursor: pointer; outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='white' stroke-opacity='0.45' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 9px center;
+    transition: border-color 0.2s;
+  }
+  .s-select:focus { border-color: var(--accent1); }
+  .s-select option { background: #1a1a2e; }
+
+  /* Range */
+  .s-range-wrap { padding: 4px 0 8px; }
+  .s-range-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .s-range-top span { font-size: 11px; color: var(--text-secondary); font-family: 'Space Grotesk', sans-serif; }
+  .s-range-top b { font-size: 11px; color: var(--accent2); font-weight: 600; }
+  .s-range {
+    width: 100%; -webkit-appearance: none; height: 3px; border-radius: 100px;
+    background: linear-gradient(90deg, var(--accent1), var(--accent2)); outline: none; cursor: pointer;
+  }
+  .s-range::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.35); cursor: pointer; transition: transform 0.2s;
+  }
+  .s-range::-webkit-slider-thumb:hover { transform: scale(1.25); }
+
+  /* Swatches */
+  .swatch-row { display: flex; gap: 7px; padding: 6px 0; }
+  .swatch {
+    width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; transition: all 0.22s var(--transition); position: relative;
+  }
+  .swatch:hover { transform: scale(1.2); }
+  .swatch.active { box-shadow: 0 0 0 2px rgba(255,255,255,0.6); }
+
+  /* Divider */
+  .s-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 4px 0 16px; }
+
+  /* Hero */
+  .hero {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 80px 0 40px;
+    animation: fadeUp 0.9s var(--ease) 0.15s both;
+  }
+  @keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+  .hero h1 {
+    font-size: clamp(62px, 12vw, 110px); font-weight: 700; line-height: 0.95;
+    letter-spacing: -4px; margin-bottom: 40px;
+    background: linear-gradient(135deg, var(--text-primary) 0%, rgba(255,255,255,0.6) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  [data-theme="light"] .hero h1 {
+    background: linear-gradient(135deg, #0c0c1c 0%, #3b3b5c 100%);
+    -webkit-background-clip: text; background-clip: text;
+  }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 9px;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    color: #fff; font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 600;
+    padding: 16px 36px; border-radius: 100px; border: none; cursor: pointer;
+    box-shadow: 0 4px 28px rgba(167,139,250,0.4);
+    transition: all 0.3s var(--transition); letter-spacing: -0.2px;
+  }
+  .btn-primary:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 10px 40px rgba(167,139,250,0.55); }
+  .btn-primary:active { transform: scale(0.98); }
+
+  /* Ripple */
+  .ripple {
+    position: absolute; border-radius: 50%; background: rgba(255,255,255,0.22);
+    pointer-events: none; transform: scale(0); animation: rpl 0.55s var(--ease) forwards;
+  }
+  @keyframes rpl{to{transform:scale(4);opacity:0}}
+</style>
+</head>
+<body>
+<div class="aurora">
+  <div class="orb o1"></div><div class="orb o2"></div>
+  <div class="orb o3"></div><div class="orb o4"></div>
+</div>
+<div class="particles" id="particles"></div>
+
+<!-- Settings Overlay -->
+<div class="settings-overlay" id="settingsOverlay">
+  <div class="settings-backdrop" onclick="closeSettings()"></div>
+  <div class="settings-panel">
+    <div class="panel-title">
+      Settings
+      <button class="close-btn" onclick="closeSettings()">✕</button>
+    </div>
+
+    <!-- Appearance -->
+    <div class="s-group">
+      <div class="s-group-title">Appearance</div>
+      <div class="s-row">
+        <div><div class="s-label">Dark Mode</div></div>
+        <label class="toggle"><input type="checkbox" id="darkToggle" checked><span class="t-track"></span></label>
+      </div>
+      <div class="s-row">
+        <div><div class="s-label">Glass Effects</div></div>
+        <label class="toggle"><input type="checkbox" checked><span class="t-track"></span></label>
+      </div>
+      <div class="s-row">
+        <div><div class="s-label">Reduce Motion</div></div>
+        <label class="toggle"><input type="checkbox"><span class="t-track"></span></label>
+      </div>
+      <div class="s-row" style="align-items:flex-start; flex-direction:column; gap:8px">
+        <div class="s-label">Accent Color</div>
+        <div class="swatch-row">
+          <div class="swatch active" style="background:#a78bfa" onclick="setAccent('#a78bfa','#38bdf8','#f472b6',this)"></div>
+          <div class="swatch" style="background:#38bdf8" onclick="setAccent('#38bdf8','#818cf8','#34d399',this)"></div>
+          <div class="swatch" style="background:#f472b6" onclick="setAccent('#f472b6','#fb923c','#a78bfa',this)"></div>
+          <div class="swatch" style="background:#34d399" onclick="setAccent('#34d399','#38bdf8','#818cf8',this)"></div>
+          <div class="swatch" style="background:#fb923c" onclick="setAccent('#fb923c','#facc15','#f87171',this)"></div>
+          <div class="swatch" style="background:#f87171" onclick="setAccent('#f87171','#fb923c','#fbbf24',this)"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="s-divider"></div>
+
+    <!-- Game Layout -->
+    <div class="s-group">
+      <div class="s-group-title">Game Layout</div>
+      <div class="s-row">
+        <div class="s-label">Grid Columns</div>
+        <select class="s-select">
+          <option>2</option><option selected>3</option><option>4</option><option>5</option><option>List</option>
+        </select>
+      </div>
+      <div class="s-row">
+        <div class="s-label">Sort By</div>
+        <select class="s-select">
+          <option>Popular</option><option>New</option><option>A–Z</option><option>Favorites</option>
+        </select>
+      </div>
+      <div class="s-row">
+        <div class="s-label">Game Previews</div>
+        <label class="toggle"><input type="checkbox" checked><span class="t-track"></span></label>
+      </div>
+    </div>
+
+    <div class="s-divider"></div>
+
+    <!-- Audio -->
+    <div class="s-group">
+      <div class="s-group-title">Audio & Performance</div>
+      <div class="s-range-wrap">
+        <div class="s-range-top"><span>Volume</span><b id="volVal">80%</b></div>
+        <input class="s-range" type="range" min="0" max="100" value="80" step="1" oninput="document.getElementById('volVal').textContent=this.value+'%'">
+      </div>
+      <div class="s-range-wrap">
+        <div class="s-range-top"><span>FPS Cap</span><b id="fpsVal">60fps</b></div>
+        <input class="s-range" type="range" min="30" max="144" value="60" step="1" oninput="document.getElementById('fpsVal').textContent=this.value+'fps'">
+      </div>
+      <div class="s-row">
+        <div class="s-label">Hardware Acceleration</div>
+        <label class="toggle"><input type="checkbox" checked><span class="t-track"></span></label>
+      </div>
+    </div>
+
+    <div class="s-divider"></div>
+
+    <!-- Notifications -->
+    <div class="s-group">
+      <div class="s-group-title">Notifications</div>
+      <div class="s-row">
+        <div class="s-label">New Games</div>
+        <label class="toggle"><input type="checkbox" checked><span class="t-track"></span></label>
+      </div>
+      <div class="s-row">
+        <div class="s-label">Leaderboard</div>
+        <label class="toggle"><input type="checkbox" checked><span class="t-track"></span></label>
+      </div>
+      <div class="s-row">
+        <div class="s-label">Daily Challenge</div>
+        <label class="toggle"><input type="checkbox" checked><span class="t-track"></span></label>
+      </div>
+      <div class="s-row">
+        <div class="s-label">Friend Activity</div>
+        <label class="toggle"><input type="checkbox"><span class="t-track"></span></label>
+      </div>
+    </div>
+
+    <div class="s-divider"></div>
+
+    <!-- Privacy -->
+    <div class="s-group">
+      <div class="s-group-title">Privacy</div>
+      <div class="s-row">
+        <div class="s-label">Anonymous Play</div>
+        <label class="toggle"><input type="checkbox" checked><span class="t-track"></span></label>
+      </div>
+      <div class="s-row">
+        <div class="s-label">Clear History on Exit</div>
+        <label class="toggle"><input type="checkbox"><span class="t-track"></span></label>
+      </div>
+    </div>
+
+    <div class="s-divider"></div>
+
+    <!-- Shortcuts -->
+    <div class="s-group">
+      <div class="s-group-title">Shortcuts</div>
+      <div class="s-row"><div class="s-label" style="font-family:monospace;font-size:12px">G — Games &nbsp;·&nbsp; D — Dark Mode</div></div>
+      <div class="s-row"><div class="s-label" style="font-family:monospace;font-size:12px">/ — Search &nbsp;·&nbsp; Esc — Exit</div></div>
+      <div class="s-row">
+        <div class="s-label">Enable Shortcuts</div>
+        <label class="toggle"><input type="checkbox" checked><span class="t-track"></span></label>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="page">
+  <nav>
+    <div class="logo">Kahra</div>
+    <div class="nav-right">
+      <div class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </div>
+      <div class="icon-btn" id="cogBtn" onclick="toggleSettings()" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </div>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <h1>Kahra</h1>
+    <button class="btn-primary" onclick="rippleBtn(this)">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Browse Games
+    </button>
+  </div>
+</div>
+
+<script>
+let isDark = true;
+const body = document.body;
+
+function toggleTheme() {
+  isDark = !isDark;
+  body.setAttribute('data-theme', isDark ? '' : 'light');
+  if (!isDark) body.setAttribute('data-theme','light'); else body.removeAttribute('data-theme');
+  document.getElementById('darkToggle').checked = isDark;
+  const btn = document.getElementById('themeBtn');
+  const svg = isDark
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+  btn.innerHTML = svg;
+  localStorage.setItem('kahra-theme', isDark ? 'dark' : 'light');
+}
+
+document.getElementById('darkToggle').addEventListener('change', e => {
+  if (e.target.checked !== isDark) toggleTheme();
+});
+
+function toggleSettings() {
+  const overlay = document.getElementById('settingsOverlay');
+  const cog = document.getElementById('cogBtn');
+  const isOpen = overlay.classList.contains('open');
+  if (!isOpen) {
+    overlay.classList.add('open');
+    cog.classList.add('spinning');
+    setTimeout(() => cog.classList.remove('spinning'), 500);
+  } else {
+    closeSettings();
+  }
+}
+function closeSettings() {
+  document.getElementById('settingsOverlay').classList.remove('open');
+}
+
+function setAccent(a1, a2, a3, el) {
+  document.documentElement.style.setProperty('--accent1', a1);
+  document.documentElement.style.setProperty('--accent2', a2);
+  document.documentElement.style.setProperty('--accent3', a3);
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function rippleBtn(btn) {
+  const r = document.createElement('div');
+  r.className = 'ripple';
+  const s = Math.max(btn.offsetWidth, btn.offsetHeight);
+  r.style.cssText = `width:${s}px;height:${s}px;left:${btn.offsetWidth/2 - s/2}px;top:${btn.offsetHeight/2 - s/2}px;`;
+  btn.style.position = 'relative'; btn.style.overflow = 'hidden';
+  btn.appendChild(r);
+  setTimeout(() => r.remove(), 600);
+}
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement.tagName.toLowerCase();
+  if (['input','select','textarea'].includes(tag)) return;
+  if (e.key.toLowerCase() === 'd') toggleTheme();
+  if (e.key === 'Escape') closeSettings();
+});
+
+// Particles
+const pc = document.getElementById('particles');
+for (let i = 0; i < 14; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.cssText = `left:${Math.random()*100}vw;width:${2+Math.random()*2}px;height:${2+Math.random()*2}px;animation-duration:${10+Math.random()*14}s;animation-delay:${-Math.random()*20}s;opacity:${0.15+Math.random()*0.4}`;
+  pc.appendChild(p);
+}
+
+const saved = localStorage.getItem('kahra-theme');
+if (saved === 'light') toggleTheme();
+</script>
+</body>
+</html>
